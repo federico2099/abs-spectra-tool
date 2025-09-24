@@ -49,20 +49,20 @@ spectra-tool spec_overlap  --exp spec_exp.dat --calc spec_calc.dat   --lam-min 4
 // examples/spectra_job.json
 {
   "command": "spectra",
-  "out_prefix": "WS_MC4H",
+  "out_prefix": "abs",
   "plot": true,
   "spectra": {
-    "energies": "energies.csv",
-    "osc": "osc.csv",
-    "nstates": 25,
+    "energies": "energies.dat",
+    "osc": "osc.dat",
+    "nstates": 5,
     "nsamp": 100,
     "temp": 298.15,
-    "ref_index": 1.477,
-    "bro_fac": 0.075,
+    "ref_index": 1.2,
+    "bro_fac": 0.05,
     "lshape": "gau",
-    "lspoints": 4000,
-    "set_min": 0.3,
-    "set_max": 8.0
+    "lspoints": 1000,
+    "set_min": 0.1,
+    "set_max": 6.0
   }
 }
 ```
@@ -80,10 +80,10 @@ Another example:
   "out_prefix": "overlap_job",
   "plot": true,
   "spec_overlap": {
-    "exp": "spec_exp.csv",
-    "calc": "spec_calc.csv",
-    "lam_min": 420.0,
-    "lam_max": 560.0,
+    "exp": "spec_exp.dat",
+    "calc": "spec_calc.dat",
+    "lam_min": 400.0,
+    "lam_max": 600.0,
     "dlam": 0.1
   }
 }
@@ -96,19 +96,19 @@ import numpy as np
 
 # spectra
 job1 = CrossSectionJob(
-    energies=np.loadtxt('energies.csv', delimiter=','),
-    osc=np.loadtxt('osc.csv', delimiter=','),
-    nstates=25, nsamp=100,
-    temp=298.15, ref_index=1.477, bro_fac=0.075,
-    lshape='gau', lspoints=4000, set_min=0.3, set_max=8.0,
+    energies=np.loadtxt('energies.dat', delimiter=','),
+    osc=np.loadtxt('osc.dat', delimiter=','),
+    nstates=5, nsamp=100,
+    temp=298.15, ref_index=1.2, bro_fac=0.05,
+    lshape='gau', lspoints=1000, set_min=0.1, set_max=6.0,
 )
-res1 = job1.compute(); res1.save('WS_MC4H', plot=True)
+res1 = job1.compute(); res1.save('abs', plot=True)
 
 # spec_overlap
 job2 = OverlapJob(
-    exp=np.loadtxt('spec_exp.csv', delimiter=','),
-    calc=np.loadtxt('spec_calc.csv', delimiter=','),
-    lam_min=420.0, lam_max=560.0, dlam=0.1,
+    exp=np.loadtxt('spec_exp.dat', delimiter=','),
+    calc=np.loadtxt('spec_calc.dat', delimiter=','),
+    lam_min=400.0, lam_max=600.0, dlam=0.1,
 )
 res2 = job2.compute(); res2.save('overlap_job', plot=True)
 ```
