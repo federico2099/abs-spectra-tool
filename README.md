@@ -38,10 +38,10 @@ These extras are defined in `pyproject.toml` under `[project.optional-dependenci
 ## Command line
 ```bash
 # Cross section (spectra)
-spectra-tool spectra   --energies energies.csv --osc osc.csv   --nstates 25 --nsamp 100   --temp 298.15 --ref-index 1.477   --bro-fac 0.075 --lshape gau --lspoints 4000   --set-min 0.3 --set-max 8.0   --out-prefix WS_MC4H --plot
+spectra-tool spectra  --energies energies.dat --osc osc.dat  --nstates 5 --nsamp 100  --temp 298.15 --ref-index 1.2  --bro-fac 0.05 --lshape gau --lspoints 1000  --set-min 0.1 --set-max 6.0  --out-prefix abs --plot
 
 # Spectral overlap (spec_overlap)
-spectra-tool spec_overlap   --exp spec_exp.csv --calc spec_calc.csv   --lam-min 420 --lam-max 560 --dlam 0.1   --out-prefix overlap_job --plot
+spectra-tool spec_overlap  --exp spec_exp.dat --calc spec_calc.dat   --lam-min 400 --lam-max 600 --dlam 0.1   --out-prefix overlap_job --plot
 ```
 
 ## JSON config
