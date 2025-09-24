@@ -1,0 +1,12 @@
+{
+  "command": "spec_overlap",
+  "out_prefix": "overlap_job",
+  "plot": true,
+  "spec_overlap": {
+    "exp": "spec_exp.csv",
+    "calc": "spec_calc.csv",
+    "lam_min": 420.0,
+    "lam_max": 560.0,
+    "dlam": 0.1
+  }
+}

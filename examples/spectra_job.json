@@ -1,0 +1,18 @@
+{
+  "command": "spectra",
+  "out_prefix": "WS_MC4H",
+  "plot": true,
+  "spectra": {
+    "energies": "energies.csv",
+    "osc": "osc.csv",
+    "nstates": 25,
+    "nsamp": 100,
+    "temp": 298.15,
+    "ref_index": 1.477,
+    "bro_fac": 0.075,
+    "lshape": "gau",
+    "lspoints": 4000,
+    "set_min": 0.3,
+    "set_max": 8.0
+  }
+}

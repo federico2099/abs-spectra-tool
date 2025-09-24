@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectra-tool"
+version = "0.1.0"
+description = "Photoabsorption cross sections and spectral overlap — easy CLI and Python API"
+authors = [{ name="Your Name", email="you@example.com" }]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+  "numpy>=1.22",
+  "scipy>=1.10"
+]
+
+[project.optional-dependencies]
+plots = ["matplotlib>=3.7"]
+dev = ["pytest>=7", "coverage[toml]>=7"]
+
+[project.urls]
+Homepage = "https://example.com/"
+
+[project.scripts]
+spectra-tool = "spectra_tool.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
