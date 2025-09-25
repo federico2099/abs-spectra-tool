@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """
-Spectra Tool — OOP + CLI
+Absorption Spectra Tool
 Subcommands:
   • spectra       -> photoabsorption cross section
   • spec_overlap  -> spectral overlap metrics
 
 Also supports JSON config with: { "command": "spectra" | "spec_overlap", ... }
+
+************************** Author ****************************
+!                                                            !
+!                   Federico J. Hernandez                    !
+!                         Sep 2025                           !
+!                                                            !
+**************************************************************
+
 """
 from __future__ import annotations
 
@@ -25,12 +33,21 @@ try:
 except Exception:  # pragma: no cover
     plt = None
 
-# ------------- Logging -------------
+# Logging
 def setup_logging(verbose: bool = False) -> None:
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format='[%(levelname)s] %(message)s')
 
-# ------------- I/O helpers -------------
+def normalize_keys(obj):
+    """Recursively convert all dict keys from hyphen-case to underscore_case."""
+    if isinstance(obj, dict):
+        return {str(k).replace('-', '_'): normalize_keys(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [normalize_keys(x) for x in obj]
+    else:
+        return obj
+
+# I/O
 def load_array(path: str) -> np.ndarray:
     """Load CSV/NPY/NPZ to 2D numpy array."""
     ext = os.path.splitext(path)[1].lower()
@@ -51,16 +68,57 @@ def load_array(path: str) -> np.ndarray:
 
 def save_csv(path: str, array: np.ndarray, header: Optional[str] = None) -> None:
     os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
-    np.savetxt(path, array, delimiter=',', header=header or '', comments='')
+    np.savetxt(path, array, delimiter=',', header=header or '')
 
-# ------------- Physics helpers -------------
+# Auxiliary Physical functions
 def eV2nm(energies_eV: np.ndarray) -> np.ndarray:
+    """
+      Convert an array of wavelengths in nanometers to energies in eV.
+
+      Parameters:
+      wavelengths_nm (np.array): 1D array of wavelengths in nanometers
+
+      Returns:
+      np.array: 1D array of energies in electronvolts
+    """
     from scipy.constants import h, c, eV
     energies_joules = np.asarray(energies_eV) * eV
     wavelengths_m = (h * c) / energies_joules
     return wavelengths_m / 1e-9
 
+def nm2eV(wavelengths_nm: np.ndarray) -> np.ndarray:
+    """
+      Convert an array of wavelengths in nanometers to energies in electronvolts.
+
+      Parameters:
+      wavelengths_nm (np.array): 1D array of wavelengths in nanometers
+
+      Returns:
+      np.array: 1D array of energies in electronvolts
+    """
+    from scipy.constants import h, c, eV
+    # Convert wavelengths from nanometers to meters
+    wavelengths_m = wavelengths_nm * 1e-9
+    # Calculate energies in joules
+    energies_joules = (h * c) / wavelengths_m
+    # Convert energies to electronvolts
+    energies_eV = energies_joules / eV
+    return energies_eV
+
 def ls_func(shape: str, grid: np.ndarray, broad, ener: float) -> np.ndarray:
+    '''
+      Lineshape function: Gaussian, Lorentzian or Voigt
+
+      Parameters:
+          shape (str): 'gau' for Gaussian, 'lor' for Lorentzian, 'voi' for Voigt.
+          grid (ndarray): Array representing the grid.
+          broad (float): Broadening factor. Sigma for Gaussian, gamma for Lorentzian
+                         and np.array[sigma,gamma] for Voigt
+          ener (float): Energy value.
+
+      Returns:
+          ndarray: Calculated lineshape function values.
+    '''
     from scipy.special import wofz  # Voigt
     hbar = 1.0
     if shape == 'gau':
@@ -94,7 +152,7 @@ class CrossSectionResult:
         save_csv(
             f"{out_prefix}_grid.csv",
             grid_mat,
-            header='energy_eV,wavelength_nm,total_sigma_cm2,total_err_sigma_cm2',
+            header='energy_eV,         wavelength_nm,         total_sigma_cm2,          total_err_sigma_cm2',
         )
         per_state = np.column_stack([self.lambda_grid_nm, self.sigma_per_state])
         headers = ['wavelength_nm'] + [f'sigma_state_{i+1}_cm2' for i in range(self.sigma_per_state.shape[1])]
@@ -110,7 +168,7 @@ class CrossSectionResult:
             plt.plot(self.lambda_grid_nm, self.total_sigma, label='Total σ')
             plt.xlabel('Wavelength (nm)'); plt.ylabel('Cross section (cm$^2$)')
             plt.title('Photoabsorption cross section'); plt.legend(); plt.tight_layout()
-            fig.savefig(f"{out_prefix}_total.png", dpi=200)
+            fig.savefig(f"{out_prefix}_total.png", dpi=400)
             plt.close(fig)
 
 @dataclass
@@ -133,25 +191,32 @@ class OverlapResult:
             plt.plot(self.lambda_grid_nm, self.y_calc_interp, label='CALC (interp)')
             plt.xlabel('Wavelength (nm)'); plt.ylabel('Intensity (arb. units)')
             plt.title('Spectral overlap window'); plt.legend(); plt.tight_layout()
-            fig.savefig(f"{out_prefix}_overlap.png", dpi=200)
+            fig.savefig(f"{out_prefix}_overlap.png", dpi=400)
             plt.close(fig)
 
 # ------------- Job classes -------------
 @dataclass
 class CrossSectionJob:
-    energies: np.ndarray  # (npoints, nstates)
-    osc: np.ndarray       # (npoints, nstates)
-    nstates: int
-    nsamp: Optional[int] = None
-    temp: float = 0.0
-    ref_index: float = 1.0
-    bro_fac: float = 0.05
-    lshape: str = 'gau'
-    lspoints: int = 2000
-    set_min: Optional[float] = None
-    set_max: Optional[float] = None
+    energies: np.ndarray  # Array of energies in eV. Each column corresponds to one state (npoints, nstates)
+    osc: np.ndarray       # Array of oscillator strengths. Each column corresponds to one state (npoints, nstates)
+    nstates: int          # Number of electronic states consdiered
+    nsamp: Optional[int] = None # Number of sampled conformations
+    temp: float = 0.0   # Temperature in Kelvin
+    ref_index: float = 1.0  # Refractive index
+    bro_fac: float = 0.05 # Broadening factor
+    lshape: str = 'gau' # Lineshape function ('gau' for Gaussian, 'lor' for Lorentzian)
+    lspoints: int = 2000 # Number of points in lineshape grid
+    set_min: Optional[float] = None # Minimum energy considered for the grid 
+    set_max: Optional[float] = None # Maximum energy considered for the grid
 
     def compute(self) -> CrossSectionResult:
+        """
+        Returns:
+        tuple: (ls_grid, total_sigma, sigma)
+            ls_grid (ndarray): Lineshape grid.
+            total_sigma (ndarray): Total photoabsorption cross-section.
+            sigma (ndarray): Photoabsorption cross-section for each state
+        """
         from scipy.constants import physical_constants, m_e, c, e, epsilon_0
         energies = np.asarray(self.energies)
         osc = np.asarray(self.osc)
@@ -213,23 +278,28 @@ class CrossSectionJob:
 
 @dataclass
 class OverlapJob:
-    exp: np.ndarray   # columns: wl_nm, intensity
-    calc: np.ndarray  # columns: wl_nm, intensity
-    lam_min: float = 420.0
-    lam_max: float = 560.0
-    dlam: float = 0.25
+    exp: np.ndarray   # Reference spectrum (can be experimental) - columns: wl_nm, intensity
+    calc: np.ndarray  # Simulated spectrum - columns: wl_nm, intensity
+    lam_min: float = 300.0
+    lam_max: float = 500.0
+    dlam: float = 0.1
 
     def compute(self) -> OverlapResult:
+        # Common wavelength grid on the requested domain
         lam = np.arange(self.lam_min, self.lam_max + self.dlam / 2.0, self.dlam)
 
+        # Interpolate both spectra to the grid (extrapolate as 0 outside data)
         def interp(arr: np.ndarray) -> np.ndarray:
             wl, I = np.asarray(arr[:, 0], float), np.asarray(arr[:, 1], float)
-            idx = np.argsort(wl); wl, I = wl[idx], np.clip(I[idx], 0.0, None)
+            # Clipping for no negative intensities
+            idx = np.argsort(wl); wl, I = wl[idx], np.clip(I[idx], 0.0, None) 
+            # numpy.interp: values outside range -> edge values; make them 0 instead
             return np.interp(lam, wl, I, left=0.0, right=0.0)
 
         y_exp = interp(self.exp)
         y_cal = interp(self.calc)
 
+        # Area-normalise (turn into probability densities over wavelength)
         def area(y: np.ndarray) -> float:
             return float(np.trapezoid(y, lam))
 
@@ -238,8 +308,11 @@ class OverlapJob:
             return y / a if a > 0 else y
 
         p = norm(y_cal); q = norm(y_exp)
+        # --- Metrics ---
+        # Overlap area
         OA = float(np.trapezoid(np.minimum(p, q), lam))
 
+        # Best-scale RMSE between raw (non-normalised) spectra
         num = float(np.trapezoid(y_cal * y_exp, lam))
         den = float(np.trapezoid(y_exp * y_exp, lam))
         s_opt = (num / den) if den > 0 else 0.0
@@ -260,8 +333,8 @@ class SpectraTool:
     @staticmethod
     def run_config(cfg: Dict, verbose: bool = False) -> None:
         """Run from dict/JSON config.
-        Accepted top-level keys:
-          command: "spectra" | "spec_overlap"  (preferred)
+        Top-level keys:
+          command: "spectra" | "spec_overlap"
           out_prefix: str
           plot: bool
           spectra: {...}        # params for spectra
@@ -269,6 +342,7 @@ class SpectraTool:
 
         Backward-compat: if 'mode' is 1 or 2, map to the respective command.
         """
+        cfg = normalize_keys(cfg)
         setup_logging(verbose)
         out_prefix = cfg.get('out_prefix', 'out')
         plot = bool(cfg.get('plot', False))
@@ -303,9 +377,9 @@ class SpectraTool:
             job = OverlapJob(
                 exp=exp[:, :2],
                 calc=calc[:, :2],
-                lam_min=float(m2.get('lam_min', 420.0)),
-                lam_max=float(m2.get('lam_max', 560.0)),
-                dlam=float(m2.get('dlam', 0.25)),
+                lam_min=float(m2.get('lam_min', 300.0)),
+                lam_max=float(m2.get('lam_max', 500.0)),
+                dlam=float(m2.get('dlam', 0.1)),
             )
             res = job.compute(); res.save(out_prefix, plot=plot)
         else:
@@ -314,14 +388,19 @@ class SpectraTool:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description='Spectra Tool (OOP + CLI): spectra (cross section), spec_overlap (overlap)')
+
+    # Global-only flags
     p.add_argument('--config', help='JSON config file (preferred for non-experts)')
-    p.add_argument('--out-prefix', default='out', help='Prefix path for outputs')
-    p.add_argument('--plot', action='store_true', help='Write PNG plots')
     p.add_argument('--verbose', action='store_true', help='Verbose logging')
+
+    # Common flags
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument('--out-prefix', default='out', help='Prefix path for outputs')
+    common.add_argument('--plot', action='store_true', help='Write PNG plots')
 
     sub = p.add_subparsers(dest='subcmd')
 
-    m1 = sub.add_parser('spectra', help='Photoabsorption cross section')
+    m1 = sub.add_parser('spectra', parents=[common], help='Photoabsorption cross section')
     m1.add_argument('--energies', help='Energies array (CSV/NPY/NPZ)')
     m1.add_argument('--osc', help='Oscillator strengths array (CSV/NPY/NPZ)')
     m1.add_argument('--nstates', type=int, help='Number of electronic states (columns)')
@@ -334,12 +413,12 @@ def build_parser() -> argparse.ArgumentParser:
     m1.add_argument('--set-min', type=float, help='Energy min (eV)')
     m1.add_argument('--set-max', type=float, help='Energy max (eV)')
 
-    m2 = sub.add_parser('spec_overlap', help='Spectral overlap metrics')
+    m2 = sub.add_parser('spec_overlap', parents=[common], help='Spectral overlap metrics')
     m2.add_argument('--exp', help='Experimental spectrum (CSV/NPY/NPZ): wl_nm,intensity')
     m2.add_argument('--calc', help='Calculated spectrum (CSV/NPY/NPZ): wl_nm,intensity')
-    m2.add_argument('--lam-min', type=float, default=420.0, help='Wavelength min (nm)')
-    m2.add_argument('--lam-max', type=float, default=560.0, help='Wavelength max (nm)')
-    m2.add_argument('--dlam', type=float, default=0.25, help='Grid spacing (nm)')
+    m2.add_argument('--lam-min', type=float, default=300.0, help='Wavelength min (nm) or energy min (eV)')
+    m2.add_argument('--lam-max', type=float, default=500.0, help='Wavelength max (nm) or energy max (eV)')
+    m2.add_argument('--dlam', type=float, default=0.1, help='Grid spacing (nm or eV)')
 
     return p
 
@@ -350,6 +429,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.config:
         with open(args.config, 'r') as f:
             cfg = json.load(f)
+        cfg = normalize_keys(cfg)
         SpectraTool.run_config(cfg, verbose=args.verbose)
         return 0
 
