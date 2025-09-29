@@ -8,17 +8,32 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install package
+          cache: pip
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install package (editable) with optional extras
+        shell: bash
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          # Try to install with extras if they exist; otherwise fall back to base
+          pip install -e ".[dev,plots]" || pip install -e .
+         
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
       - name: Run tests
-        run: pytest -q
+        run: pytest -q 
+
