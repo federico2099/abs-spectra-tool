@@ -73,7 +73,7 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
 | `--temp` / `temp` | Temperature in Kelvin. If >0, applies thermal factor to intensities. |
 | `--ref-index` / `ref_index` | Refractive index of medium (default 1.0). |
 | `--bro-fac` / `bro_fac` | Broadening factor (in eV). Width of Gaussian/Lorentzian lines. |
-| `--lshape` / `lshape` | Lineshape type: `gau` (Gaussian), `lor` (Lorenzian), or `voi` (Voigt). |
+| `--lshape` / `lshape` | Lineshape type: `gau` (Gaussian), `lor` (Lorentzian), or `voi` (Voigt). |
 | `--lspoints` / `lspoints` | Number of points in the lineshape grid. |
 | `--set-min` / `set_min` | Minimum energy (eV) of the grid (defaults to min(energies)-0.5). |
 | `--set-max` / `set_max` | Maximum energy (eV) of the grid (defaults to max(energies)+0.5). |
@@ -125,7 +125,7 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
     "lshape": "gau",
     "lspoints": 1000,
     "set_min": 0.1,
-    "set_max": 6.0
+    "set_max": 6.0,
     "plot_xmin": 430.0,
     "plot_xmax": 560.0
   }
@@ -162,7 +162,7 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
 - `<prefix>_total.png` — plot of total cross section (if `--plot` used).
 
 ### Spectral Overlap (`spec_overlap`)
-- `<prefix>_overlap_metrics.json` — metrics (OA_norm, OA_raw, RMSE, etc) OA stands for the overlap betweem the two spectra.
+- `<prefix>_overlap_metrics.json` — metrics (OA_norm, OA_raw, RMSE, etc) OA stands for the overlap between the two spectra.
 - `<prefix>_common_grid.csv` — common wavelength grid with interpolated spectra.
 - `<prefix>_overlap.png` — overlap plot (if `--plot` used).
 - `<prefix>_summary.txt` — human-readable summary of match quality.
@@ -180,11 +180,11 @@ You can also use this package directly from Python. The public entry points are:
 
 ```python
 from spectra_tool import CrossSectionJob
-import numpy as np
+import numpy as np # doctest: +SKIP
 
 # Example input arrays: shape (npoints, nstates)
-energies = np.loadtxt("energies.dat")  # eV
-osc = np.loadtxt("osc.dat")
+energies = np.loadtxt("energies.dat") # doctest: +SKIP # eV
+osc = np.loadtxt("osc.dat") # doctest: +SKIP
 
 # spectra
 calc = CrossSectionJob(
@@ -199,6 +199,7 @@ calc = CrossSectionJob(
     lspoints=2000,
     set_min=0.3,         # energy grid min (eV)
     set_max=8.0,         # energy grid max (eV)
+)
 
 spec = calc.compute()
 
@@ -217,7 +218,7 @@ spec.save("Calc_spectrum",
 ### 2) Spectral overlap from NumPy arrays
 
 ```python
-import numpy as np
+import numpy as np 
 from spectra_tool import OverlapJob
 
 # Two-column arrays: [wavelength_nm, intensity]
