@@ -26,12 +26,12 @@ This will install the `spectra-tool` command.
 
 ### CLI example (spectra)
 ```bash
-spectra-tool spectra  --energies energies.dat --osc osc.dat  --nstates 5 --nsamp 100  --temp 298.15 --ref-index 1.2  --bro-fac 0.05 --lshape gau --lspoints 1000  --set-min 0.1 --set-max 6.0  --out-prefix abs --plot --plot-xmin 450 --plot-xmax 700
+spectra-tool spectra  --energies energies.dat --osc osc.dat  --nstates 5 --nsamp 100  --temp 298.15 --ref-index 1.2  --bro-fac 0.05 --lshape gau --lspoints 1000  --set-min 0.1 --set-max 6.0  --out-prefix abs --plot --plot-xmin 430 --plot-xmax 560
 ```
 
 ### CLI example (spectra overlap)
 ```bash
-spectra-tool spec_overlap  --exp spec_exp.dat --calc spec_calc.dat   --lam-min 400 --lam-max 600 --dlam 0.1   --out-prefix overlap_job --plot --plot-xmin 450 --plot-xmax 700
+spectra-tool spec_overlap  --exp spec_exp.dat --calc spec_calc.dat   --lam-min 400 --lam-max 600 --dlam 0.1   --out-prefix overlap_job --plot --plot-xmin 430 --plot-xmax 560
 ```
 
 ### JSON config example
@@ -91,7 +91,7 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
 | `--lam-min` / `lam_min` | Minimum wavelength (nm) for comparison domain. |
 | `--lam-max` / `lam_max` | Maximum wavelength (nm) for comparison domain. |
 | `--dlam` / `dlam` | Step size (nm) for uniform comparison grid. Ignored if using `grid_mode=union`. |
-| `--grid-mode` / `grid_mode` | Grid construction: `uniform` (regular spacing via `dlam`) or `union` (union of input wavelengths). |
+| `--grid-mode` / `grid_mode` | Grid construction: `uniform` (regular spacing via `dlam`) or `union`. |
 | `--plot-xmin` / `plot_xmin` | Minimum wavelength (nm) shown in overlap plot (x-axis only). |
 | `--plot-xmax` / `plot_xmax` | Maximum wavelength (nm) shown in overlap plot (x-axis only). |
 
@@ -126,8 +126,8 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
     "lspoints": 1000,
     "set_min": 0.1,
     "set_max": 6.0
-    "plot_xmin": 450.0,
-    "plot_xmax": 700.0
+    "plot_xmin": 430.0,
+    "plot_xmax": 560.0
   }
 }
 ```
@@ -187,7 +187,7 @@ energies = np.loadtxt("energies.dat")  # eV
 osc = np.loadtxt("osc.dat")
 
 # spectra
-job = CrossSectionJob(
+calc = CrossSectionJob(
     energies=energies,
     osc=osc,
     nstates=energies.shape[1],
@@ -200,15 +200,15 @@ job = CrossSectionJob(
     set_min=0.3,         # energy grid min (eV)
     set_max=8.0,         # energy grid max (eV)
 
-res1 = job1.compute()
+spec = calc.compute()
 
 # Access arrays
-lam = res.lambda_grid_nm          # (n_grid,)
-sigma_total = res.total_sigma     # (n_grid,)
-sigma_states = res.sigma_per_state  # (n_grid, nstates)
+lam = spec.lambda_grid_nm          # (n_grid,)
+sigma_total = spec.total_sigma     # (n_grid,)
+sigma_states = spec.sigma_per_state  # (n_grid, nstates)
 
 # Save outputs (optionally with plot limits for the figure)
-res.save("Calc_spectrum",
+spec.save("Calc_spectrum",
          plot=True,
          plot_xmin=430,  # nm (figure only)
          plot_xmax=560)  # nm (figure only)
@@ -224,7 +224,7 @@ from spectra_tool import OverlapJob
 exp = np.loadtxt("Exp_spectrum.txt")
 cal = np.loadtxt("Calc_spectrum.txt")
 
-job = OverlapJob(
+calc = OverlapJob(
     exp=exp[:, :2],
     calc=cal[:, :2],
     lam_min=430.0,
@@ -233,16 +233,16 @@ job = OverlapJob(
     grid_mode="uniform"
 )
 
-res = job.compute()  # OverlapResult
+overlap = calc.compute()  # OverlapResult
 
 # Metrics (as numbers)
-print(res.OA_norm, res.OA_raw, res.RMSE_raw, res.MAE_raw, res.s_opt, res.RMSE_scaled)
+print(overlap.OA_norm, overlap.OA_raw, overlap.RMSE_raw, overlap.MAE_raw, overlap.s_opt, overlap.RMSE_scaled)
 
 # Human-readable summary
-print(res.summarize())
+print(overlap.summarize())
 
 # Save outputs (optionally with plot limits for the figure)
-res.save("overlap",
+overlap.save("overlap",
          plot=True,
          plot_xmin=430,  # nm (figure only)
          plot_xmax=550)  # nm (figure only)
