@@ -11,7 +11,7 @@ Photoabsorption cross sections (**spectra**) and spectral overlap metrics (**spe
 Clone the repository and install locally:
 
 ```bash
-git clone https://github.com/yourusername/abs-spectra-tool.git
+git clone https://github.com/federico2099/abs-spectra-tool.git
 cd abs-spectra-tool
 pip install -e .
 # with optional extras:
@@ -31,7 +31,7 @@ spectra-tool spectra  --energies energies.dat --osc osc.dat  --nstates 5 --nsamp
 
 ### CLI example (spectra overlap)
 ```bash
-spectra-tool spec_overlap  --exp spec_exp.dat --calc spec_calc.dat   --lam-min 400 --lam-max 600 --dlam 0.1   --out-prefix overlap_job --plot --plot-xmin 430 --plot-xmax 560
+spectra-tool spec_overlap  --exp exp_spec.dat --calc calc_spec.dat   --lam-min 400 --lam-max 600 --dlam 0.1   --out-prefix overlap --plot --plot-xmin 430 --plot-xmax 560
 ```
 
 ### JSON config example
@@ -55,7 +55,7 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
 
 | Keyword / CLI flag | Description |
 |--------------------|-------------|
-| `--config` | Path to JSON config file (recommended for non-experts). |
+| `--config` | Path to JSON config file. |
 | `--verbose` | Enable verbose logging. |
 | `--out-prefix` / `out_prefix` | Prefix for all output files (CSV/NPZ/plots). |
 | `--plot` / `plot` | If set, save PNG plots of spectra/overlap results. |
@@ -73,7 +73,7 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
 | `--temp` / `temp` | Temperature in Kelvin. If >0, applies thermal factor to intensities. |
 | `--ref-index` / `ref_index` | Refractive index of medium (default 1.0). |
 | `--bro-fac` / `bro_fac` | Broadening factor (in eV). Width of Gaussian/Lorentzian lines. |
-| `--lshape` / `lshape` | Lineshape type: `gau`, `lor`, or `voi`. |
+| `--lshape` / `lshape` | Lineshape type: `gau` (Gaussian), `lor` (Lorenzian), or `voi` (Voigt). |
 | `--lspoints` / `lspoints` | Number of points in the lineshape grid. |
 | `--set-min` / `set_min` | Minimum energy (eV) of the grid (defaults to min(energies)-0.5). |
 | `--set-max` / `set_max` | Maximum energy (eV) of the grid (defaults to max(energies)+0.5). |
@@ -90,8 +90,8 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
 | `--calc` / `calc` | Calculated spectrum file. Same format as `--exp`. |
 | `--lam-min` / `lam_min` | Minimum wavelength (nm) for comparison domain. |
 | `--lam-max` / `lam_max` | Maximum wavelength (nm) for comparison domain. |
-| `--dlam` / `dlam` | Step size (nm) for uniform comparison grid. Ignored if using `grid_mode=union`. |
-| `--grid-mode` / `grid_mode` | Grid construction: `uniform` (regular spacing via `dlam`) or `union`. |
+| `--dlam` / `dlam` | Step size (nm) for uniform comparison grid. |
+| `--grid-mode` / `grid_mode` | Grid construction: `uniform` (regular spacing via `dlam`) or `union` (not implemented yet). |
 | `--plot-xmin` / `plot_xmin` | Minimum wavelength (nm) shown in overlap plot (x-axis only). |
 | `--plot-xmax` / `plot_xmax` | Maximum wavelength (nm) shown in overlap plot (x-axis only). |
 
@@ -139,8 +139,8 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
   "out_prefix": "overlap",
   "plot": true,
   "spec_overlap": {
-    "exp": "Exp_spec.txt",
-    "calc": "Calc_spec.dat",
+    "exp": "exp_spec.txt",
+    "calc": "calc_spec.dat",
     "lam_min": 430.0,
     "lam_max": 560.0,
     "dlam": 0.1,
@@ -162,7 +162,7 @@ Both interfaces accept the same keywords. In JSON, use `snake_case` (e.g. `lam_m
 - `<prefix>_total.png` — plot of total cross section (if `--plot` used).
 
 ### Spectral Overlap (`spec_overlap`)
-- `<prefix>_overlap_metrics.json` — metrics (OA_norm, OA_raw, RMSE, etc).
+- `<prefix>_overlap_metrics.json` — metrics (OA_norm, OA_raw, RMSE, etc) OA stands for the overlap betweem the two spectra.
 - `<prefix>_common_grid.csv` — common wavelength grid with interpolated spectra.
 - `<prefix>_overlap.png` — overlap plot (if `--plot` used).
 - `<prefix>_summary.txt` — human-readable summary of match quality.
@@ -221,8 +221,8 @@ import numpy as np
 from spectra_tool import OverlapJob
 
 # Two-column arrays: [wavelength_nm, intensity]
-exp = np.loadtxt("Exp_spectrum.txt")
-cal = np.loadtxt("Calc_spectrum.txt")
+exp = np.loadtxt("exp_spectrum.txt")
+cal = np.loadtxt("calc_spectrum.txt")
 
 calc = OverlapJob(
     exp=exp[:, :2],
