@@ -64,11 +64,11 @@ def load_array(path: str) -> np.ndarray:
         except Exception:
             try:
                 arr = np.loadtxt(path, delimiter=',', skiprows=1)
-        except Exception:
-            try:
-                arr = np.loadtxt(path)
             except Exception:
-                arr = np.loadtxt(path, skiprows=1)
+                try:
+                    arr = np.loadtxt(path)
+                except Exception:
+                    arr = np.loadtxt(path, skiprows=1)
     if arr.ndim == 1:
         arr = arr.reshape(-1, 1)
     return arr
@@ -532,7 +532,7 @@ class SpectraTool:
             res = job.compute()
             res.save(out_prefix, plot=plot,
                      plot_xmin=m1.get('plot_xmin'),
-                     plot_xmax=m1.get('plot_xmax')))
+                     plot_xmax=m1.get('plot_xmax'))
 
         elif command == 'spec_overlap':
             m2 = cfg.get('spec_overlap', {})
