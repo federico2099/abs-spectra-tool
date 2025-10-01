@@ -200,7 +200,23 @@ class OverlapResult:
 
     @property
     def OA(self) -> float:
+        """Alias for tests expecting `res.OA_norm`."""
         return self.OA_norm
+
+    @property
+    def rmse_scaled(self) -> float:
+        """Alias for tests expecting `res.rmse_scaled`."""
+        return self.RMSE_scaled
+
+    @property
+    def rmse_raw(self) -> float:
+        """Alias for tests expecting `res.rmse_raw`."""
+        return self.RMSE_raw
+
+    @property
+    def mae_raw(self) -> float:
+        """Alias for tests expecting `res.mae_raw`."""
+        return self.MAE_raw
 
     def metrics_dict(self) -> Dict[str, float]:
         """Return metrics as a plain dict."""
