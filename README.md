@@ -15,7 +15,7 @@ git clone https://github.com/federico2099/abs-spectra-tool.git
 cd abs-spectra-tool
 pip install -e .
 # with optional extras:
-pip install -e .[dev,plots]
+pip install -e ".[dev,plots]"
 ```
 
 This will install the `spectra-tool` command.
@@ -180,7 +180,7 @@ You can also use this package directly from Python. The public entry points are:
 
 ```python
 from spectra_tool import CrossSectionJob
-import numpy as np # doctest: +SKIP
+import numpy as np 
 
 # Example input arrays: shape (npoints, nstates)
 energies = np.loadtxt("energies.dat") # doctest: +SKIP # eV
@@ -222,8 +222,8 @@ import numpy as np
 from spectra_tool import OverlapJob
 
 # Two-column arrays: [wavelength_nm, intensity]
-exp = np.loadtxt("exp_spectrum.txt")
-cal = np.loadtxt("calc_spectrum.txt")
+exp = np.loadtxt("exp_spectrum.txt") # doctest: +SKIP
+cal = np.loadtxt("calc_spectrum.txt") # doctest: +SKIP
 
 calc = OverlapJob(
     exp=exp[:, :2],
@@ -296,7 +296,7 @@ SpectraTool.run_config(cfg, verbose=True)
 - CSV outputs include a `#` header so they can be safely read with `numpy.loadtxt` (header ignored).
 - For large per-state matrices, use the NPZ (`*_sigma_per_state.npz`) for efficient reload:
   ```python
-  data = np.load("spec_sigma_per_state.npz")
+  data = np.load("spec_sigma_per_state.npz") # doctest: +SKIP
   lam = data["lambda_grid_nm"]
   sigma = data["sigma_matrix"]
   ```
