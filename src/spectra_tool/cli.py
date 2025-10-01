@@ -548,7 +548,7 @@ class SpectraTool:
             )
             res = job.compute(); res.save(out_prefix, plot=plot,
                                           plot_xmin=m2.get('plot_xmin'),
-                                          plot_xmax=m2.get('plot_xmax')))
+                                          plot_xmax=m2.get('plot_xmax'))
         else:
             raise ValueError("Config must include 'command': 'spectra' or 'spec_overlap'")
 
