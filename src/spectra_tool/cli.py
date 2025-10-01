@@ -173,7 +173,7 @@ class CrossSectionResult:
             fig = plt.figure()
             plt.plot(self.lambda_grid_nm, self.total_sigma, label='Total σ')
             plt.xlabel('Wavelength (nm)'); plt.ylabel('Cross section (cm$^2$)')
-            plt.title('Photoabsorption cross section ($\sigma$)'); plt.legend(); plt.tight_layout()
+            plt.title(r'Photoabsorption cross section ($\sigma$)'); plt.legend(); plt.tight_layout()
             if plot_xmin is not None or plot_xmax is not None:
                 plt.xlim(plot_xmin, plot_xmax)
             fig.savefig(f"{out_prefix}_total.png", dpi=400)
@@ -195,6 +195,12 @@ class OverlapResult:
     area_ratio: float
     s_opt: float
     RMSE_scaled: float
+
+    # Backwards compatibility alias for tests expecting .OA
+
+    @property
+    def OA(self) -> float:
+        return self.OA_norm
 
     def metrics_dict(self) -> Dict[str, float]:
         """Return metrics as a plain dict."""
